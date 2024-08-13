@@ -11,7 +11,7 @@
 
 ## 安装指南
 
-1. 安装依赖
+1. 安装依赖（建议使用虚拟环境，比如 venv 或者 conda）
    ```
    pip install -r requirements.txt
    ```
