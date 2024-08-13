@@ -27,6 +27,7 @@
 │   ├── pnp.npz
 │   ├── some_corresp.npz
 │   └── temple_coords.npz
+├── proj-b.pdf
 ├── python
 │   ├── helper.py
 │   ├── my_test.py
@@ -42,6 +43,14 @@
 ```
 
 **注意**：不包含 .gitignore 和 git 元数据文件。
+
+### 说明
+
+**注意**：部分文件详见 pdf 说明
+
+1. `python` 文件夹就是所有我们所需的源代码。
+2. `submission.py` 里面包含所有我们需要实现的函数
+3. `my_test.py` 是我自己写的 script，可以测试 Eight Point Algorithm 和 Find Epipolar Correspondences 的正确性
 
 ## TODO List
 
