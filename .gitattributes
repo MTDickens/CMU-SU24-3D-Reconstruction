@@ -1,3 +1,4 @@
 *.npz binary
 *.png binary
 *.pdf binary
+*.pyc binary
