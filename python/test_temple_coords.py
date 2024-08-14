@@ -85,3 +85,10 @@ ax.set_aspect('equal') # 注意将所有的 axis 的缩放程度设置成一样�
 plt.show()
 
 # 10. Save the computed extrinsic parameters (R1,R2,t1,t2) to data/extrinsics.npz
+extrinsics = {
+    'R1': M1[:, :3],
+    'R2': M2[:, :3],
+    't1': M1[:, 3],
+    't2': M2[:, 3]
+}
+np.savez('../data/extrinsics.npz', **extrinsics)
