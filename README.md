@@ -58,8 +58,8 @@
     - [x] Eight Point Algorithm
     - [x] Find Epipolar Correspondences
     - [x] Compute the Essential Matrix
-    - [ ] Implement Triangulation
-    - [ ] Write test script in `test_temple_coords.py` that uses `data/temple_coords.npz`
+    - [x] Implement Triangulation
+    - [x] Write test script in `test_temple_coords.py` that uses `data/temple_coords.npz`
 - [ ] Dense Reconstruction
     - [ ] Image Rectification
     - [ ] Disparity Map
