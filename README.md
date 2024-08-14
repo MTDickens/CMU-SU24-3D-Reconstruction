@@ -54,7 +54,7 @@
 
 ## TODO List
 
-- [ ] Sparse Reconstruction
+- [x] Sparse Reconstruction
     - [x] Eight Point Algorithm
     - [x] Find Epipolar Correspondences
     - [x] Compute the Essential Matrix
