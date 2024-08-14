@@ -132,19 +132,23 @@ def triangulate(P1, pts1, P2, pts2):
         u1, v1 = pts1[i]
         u2, v2 = pts2[i]
 
-        # 构建矩阵A
+        # 构建矩阵 A
+        # A 对应的是：u1 \times P1 X = 0, u2 \times P2 X = 0（共 6 个约束）
+        # Note: 你可以调整添加与删除不同的约束，目标是让 loss 尽量小
         A = np.array([
             u1 * P1[2] - P1[0],
             v1 * P1[2] - P1[1],
+            v1 * P1[0] - u1 * P1[1],
             u2 * P2[2] - P2[0],
-            v2 * P2[2] - P2[1]
+            v2 * P2[2] - P2[1],
+            v2 * P2[0] - u2 * P2[1]
         ])
 
-        # 对A进行SVD分解
-        _, _, V = np.linalg.svd(A)
+        # 对A进行SVD分解，等价于带约束的最小二乘法
+        _, S, Vt = np.linalg.svd(A)
 
-        # 取V的最后一列（对应于最小奇异值）并归一化
-        X = V[-1]
+        # 取V的最小绝对奇异值列并归一化
+        X = Vt[S.argmin()]
         X /= X[3]  # 齐次坐标归一化
 
         # 保存3D点
