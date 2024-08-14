@@ -123,8 +123,85 @@ Q3.1.4 Triangulation
        [O] pts3d, 3D points in space (Nx3 matrix)
 """
 def triangulate(P1, pts1, P2, pts2):
-    # replace pass by your implementation
-    pass
+    # num_points : 3D点的数量
+    num_points = pts1.shape[0]
+    pts3d = np.zeros((num_points, 3))  # 初始化3D点矩阵
+
+    for i in range(num_points):
+        # 获取图像1和图像2中对应的2D点
+        u1, v1 = pts1[i]
+        u2, v2 = pts2[i]
+
+        # 构建矩阵A
+        A = np.array([
+            u1 * P1[2] - P1[0],
+            v1 * P1[2] - P1[1],
+            u2 * P2[2] - P2[0],
+            v2 * P2[2] - P2[1]
+        ])
+
+        # 对A进行SVD分解
+        _, _, V = np.linalg.svd(A)
+
+        # 取V的最后一列（对应于最小奇异值）并归一化
+        X = V[-1]
+        X /= X[3]  # 齐次坐标归一化
+
+        # 保存3D点
+        pts3d[i] = X[:3]
+
+    return pts3d
+
+
+def pos_num(M, pts3d):
+    '''
+    计算3D点的深度，并计算在相机前面的点的数量
+    深度为正的点在相机前面，深度为负的点在相机后面
+    最好大多数点都在相机前面
+    需要用到相机的外显参数矩阵P
+    '''
+    pts3d_camera = M @ np.hstack((pts3d, np.ones((pts3d.shape[0], 1)))).T
+    num_positive_depths = np.sum(pts3d_camera[2] > 0)
+    return num_positive_depths
+    
+
+def find_correct_P2(M1, pts1, M2s, pts2, K1, K2):  
+    '''
+    这里的M1和M2s都是相机的外显参数矩阵
+    K1和K2是相机的内参矩阵
+    pts1和pts2是对应的2D点
+    分别计算4个P2的深度的点数，找到大多数点在相机前面的P2
+    返回的值是正确的M2(即第二个相机的外显参数矩阵)
+    '''
+    P1 = K1 @ M1  # 相机1的投影矩阵
+    P2s = np.zeros((3, 4, 4))  # 4个相机2的投影矩阵
+    M2 = None
+    num_points = pts1.shape[0]
+    max_positive_depths = 0
+    correct_pts3d = None
+    for i in range(4):
+        # print(i)
+        # print(M2s[:, :, i])
+        # matrix_3x3 = M2s[:, :3 , i]
+
+        # # 计算 3x3 矩阵的行列式
+        # determinant = np.linalg.det(matrix_3x3)
+        # print(determinant)
+
+        P2s[:, :, i] = K2 @ M2s[:, :, i]  # 相机2的投影矩阵
+        # print(P1)
+        # print(P2s[:, :, i])
+
+        pts3d = triangulate(P1, pts1, P2s[:, :, i], pts2)
+        num_positive_depths = pos_num(M2s[:, :, i], pts3d) + pos_num(M1, pts3d)
+        # print("i: ", i)
+        # print("num_positive_depths: ", num_positive_depths)
+        if num_positive_depths > max_positive_depths:
+            max_positive_depths = num_positive_depths
+            M2 = P2s[:, :, i]
+            correct_pts3d = pts3d
+        
+    return M2, correct_pts3d
 
 
 """
