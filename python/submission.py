@@ -219,29 +219,29 @@ Q3.2.1 Image Rectification
            t1p t2p, rectified translation vectors (3x1 matrix)
 """
 def rectify_pair(K1, K2, R1, R2, t1, t2):
-    # Converts rotation matrices and translation vectors to homogeneous form
-    P1 = np.hstack((R1, t1.reshape(3, 1)))  # 3x4 projection matrix for camera 1
-    P2 = np.hstack((R2, t2.reshape(3, 1)))  # 3x4 projection matrix for camera 2
+    # 计算光心
+    c1 = -np.linalg.inv(K1 @ R1) @ t1
+    c2 = -np.linalg.inv(K2 @ R2) @ t2
+    
+    # 计算新的旋转矩阵
+    r1 = (c1 - c2) / np.linalg.norm(c1 - c2)
+    r2 = np.cross(R2[2, :].T, r1)
+    r2 = r2 / np.linalg.norm(r2)
+    r3 = np.cross(r1, r2)
 
-    # The stereoRectifyUsedValues function calculates rectification transforms (rotation matrices) for each camera.
-    R1p, R2p, _t1p, _t2p, Q, _, _ = cv2.stereoRectify(K1, None, K2, None, (1, 1), R1 @ R2.T, t1 - t2, flags=cv2.CALIB_ZERO_DISPARITY)
-
-    # Obtain original and new projection matrices
-    P1p = K1 @ np.hstack((R1p, _t1p))
-    P2p = K2 @ np.hstack((R2p, _t2p))
-
-    # Extract M1, M2, K1p, and K2p
-    M1 = P1p[:, :3]
-    M2 = P2p[:, :3]
-    K1p = P1p[:, :3]  # Camera matrix for camera 1
-    K2p = P2p[:, :3]  # Camera matrix for camera 2
-
-    # Rectified rotation and translation vectors
-    t1p = _t1p
-    t2p = _t2p
-    R1p, _ = cv2.Rodrigues(R1p)
-    R2p, _ = cv2.Rodrigues(R2p)
-
+    R1p = np.stack([r1, r2, r3]).T
+    R2p = R1p
+    
+    K1p = K1
+    K2p = K2
+    
+    t1p = -R1p @ c1
+    t2p = -R2p @ c2
+    
+    # 计算新的校正矩阵
+    M1 = K2 @ R1p.T @ np.linalg.inv(K1)
+    M2 = K2 @ R2p.T @ np.linalg.inv(K2)
+    
     return M1, M2, K1p, K2p, R1p, R2p, t1p, t2p
 
 
