@@ -219,8 +219,30 @@ Q3.2.1 Image Rectification
            t1p t2p, rectified translation vectors (3x1 matrix)
 """
 def rectify_pair(K1, K2, R1, R2, t1, t2):
-    # replace pass by your implementation
-    pass
+    # 计算光心
+    c1 = -np.linalg.inv(K1 @ R1) @ t1
+    c2 = -np.linalg.inv(K2 @ R2) @ t2
+    
+    # 计算新的旋转矩阵
+    r1 = (c1 - c2) / np.linalg.norm(c1 - c2)
+    r2 = np.cross(R2[2, :].T, r1)
+    r2 = r2 / np.linalg.norm(r2)
+    r3 = np.cross(r1, r2)
+
+    R1p = np.stack([r1, r2, r3]).T
+    R2p = R1p
+    
+    K1p = K1
+    K2p = K2
+    
+    t1p = -R1p @ c1
+    t2p = -R2p @ c2
+    
+    # 计算新的校正矩阵
+    M1 = K2 @ R1p.T @ np.linalg.inv(K1)
+    M2 = K2 @ R2p.T @ np.linalg.inv(K2)
+    
+    return M1, M2, K1p, K2p, R1p, R2p, t1p, t2p
 
 
 """
@@ -232,8 +254,43 @@ Q3.2.2 Disparity Map
        [O] dispM, disparity map (H1xW1 matrix)
 """
 def get_disparity(im1, im2, max_disp, win_size):
-    # replace pass by your implementation
-    pass
+    # Ensure the two images are grayscale
+    if len(im1.shape) == 3:
+        im1 = cv2.cvtColor(im1, cv2.COLOR_BGR2GRAY)
+    if len(im2.shape) == 3:
+        im2 = cv2.cvtColor(im2, cv2.COLOR_BGR2GRAY)
+
+    H, W = im1.shape
+    dispM = np.zeros_like(im1, dtype=np.float32)
+
+    half_win = (win_size-1) // 2
+    
+    # Pad images to handle window size at borders
+    padded_im1 = cv2.copyMakeBorder(im1, half_win, half_win, half_win, half_win, cv2.BORDER_CONSTANT, value=0)
+    padded_im2 = cv2.copyMakeBorder(im2, half_win, half_win, half_win, half_win, cv2.BORDER_CONSTANT, value=0)
+
+    for y in range(half_win, H + half_win):
+        for x in range(half_win, W + half_win):
+            min_ssd = float('inf')
+            best_disp = 0
+            for d in range(max_disp + 1):
+                if x - d < half_win:
+                    continue
+                
+                # Define the window in both left and right images
+                window_l = padded_im1[y - half_win:y + half_win + 1, x - half_win:x + half_win + 1]
+                window_r = padded_im2[y - half_win:y + half_win + 1, x - d - half_win:x - d + half_win + 1]
+
+                ssd = np.sum((window_l - window_r) ** 2)
+                
+                if ssd < min_ssd:
+                    min_ssd = ssd
+                    best_disp = d
+            
+            dispM[y - half_win, x - half_win] = best_disp
+    
+    return dispM
+
 
 
 """
@@ -245,9 +302,26 @@ Q3.2.3 Depth Map
        [O] depthM, depth map (H1xW1 matrix)
 """
 def get_depth(dispM, K1, K2, R1, R2, t1, t2):
-    # replace pass by your implementation
-    pass
+    # Check disparity to avoid division by zero
+    dispM[dispM == 0] = 0.1
 
+    # Compute the projection matrices for both cameras
+    P1 = np.dot(K1, np.hstack((R1, t1.reshape(-1, 1))))
+    P2 = np.dot(K2, np.hstack((R2, t2.reshape(-1, 1))))
+
+    # Decompose projection matrix to get the baseline
+    T1 = np.dot(np.linalg.inv(K1), P1)[:, 3]
+    T2 = np.dot(np.linalg.inv(K2), P2)[:, 3]
+    
+    baseline = np.linalg.norm(T1 - T2)
+    
+    # Focal length
+    focal_length = K1[0, 0]
+    
+    # Compute the depth map using the formula
+    depthM = (focal_length * baseline) / dispM
+    
+    return depthM
 
 """
 Q3.3.1 Camera Matrix Estimation
