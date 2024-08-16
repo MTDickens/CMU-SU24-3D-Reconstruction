@@ -56,7 +56,7 @@ Q3.1.2 Epipolar Correspondences
            pts1, points in image 1 (Nx2 matrix)
        [O] pts2, points in image 2 (Nx2 matrix)
 """
-def epipolar_correspondences(im1, im2, F, pts1, window_size=10):
+def epipolar_correspondences(im1, im2, F, pts1, window_size=40):
     N = pts1.shape[0]
     pts2 = np.zeros_like(pts1)
     half_window = window_size // 2
@@ -138,10 +138,10 @@ def triangulate(P1, pts1, P2, pts2):
         A = np.array([
             u1 * P1[2] - P1[0],
             v1 * P1[2] - P1[1],
-            v1 * P1[0] - u1 * P1[1],
+            # v1 * P1[0] - u1 * P1[1],
             u2 * P2[2] - P2[0],
             v2 * P2[2] - P2[1],
-            v2 * P2[0] - u2 * P2[1]
+            # v2 * P2[0] - u2 * P2[1]
         ])
 
         # 对A进行SVD分解，等价于带约束的最小二乘法
